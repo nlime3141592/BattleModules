@@ -5,4 +5,16 @@ public struct BattleStat
 
     public float maxMana;
     public float mana;
+
+    public void ChangeHealth(float h)
+    {
+        float th = MathM.Mid3(0.0f, health + h, maxHealth);
+        health = th;
+    }
+
+    public void ChangeMana(float m)
+    {
+        float tm = MathM.Mid3(0.0f, mana + m, maxMana);
+        mana = tm;
+    }
 }

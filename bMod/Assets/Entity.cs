@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class tEntity : MonoBehaviour
+public class Entity : MonoBehaviour
 {
     public const float MIN_PX = -10.0f;
     public const float MAX_PX = 10.0f;

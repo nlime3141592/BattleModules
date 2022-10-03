@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,10 @@ public class BattleModule : MonoBehaviour
     public LTRB areaD2;
     public LTRB areaD1;
 
+    public BattleStat stat;
+
+    private Entity m_entity;
+
     [Header("Debug Options")]
     public bool checker;
     public List<BattleModule> mods;
@@ -19,16 +24,14 @@ public class BattleModule : MonoBehaviour
     {
         m_dctCols = new Collider2D[MAX_DETECT_COUNT];
         m_dctMods = new BattleModule[MAX_DETECT_COUNT];
+        m_entity = GetComponent<Entity>();
     }
 
     private void FixedUpdate()
     {
         if(checker)
         {
-            // checker = false;
-            Detect();
-
-            // NOTE: for debug
+            DetectBattleModule();
             mods = new List<BattleModule>(m_dctMods);
         }
     }
@@ -38,7 +41,8 @@ public class BattleModule : MonoBehaviour
         
     }
 
-    private void Detect()
+    #region Stat Change Event Functions
+    public void DetectBattleModule()
     {
         float px = transform.position.x;
         float py = transform.position.y;
@@ -49,33 +53,45 @@ public class BattleModule : MonoBehaviour
         int dctModCnt = FilterBattleModule(m_dctCols, dctColCnt, m_dctMods);
     }
 
+    public void GetDamage(float damage)
+    {
+        if(damage < 0.0f)
+            throw new ArgumentException("cannot negative argument.");
+
+        stat.ChangeHealth(-damage);
+    }
+
+    public void Heal(float health)
+    {
+        if(health < 0.0f)
+            throw new ArgumentException("cannot negative argument.");
+
+        stat.ChangeHealth(health);
+    }
+    #endregion
+
     private int FilterBattleModule(Collider2D[] dctCols, int dctColCnt, BattleModule[] dctMods)
     {
         GameObject obj;
         BattleModule mod;
         int i, j;
+        bool cmpFound;
         bool contains;
         int dctModCnt = 0;
-
-        for(i = 0; i < MAX_DETECT_COUNT; i++)
-            dctMods[i] = null;
 
         for(i = 0; i < dctColCnt; i++)
         {
             obj = dctCols[i].gameObject;
-            mod = obj.GetComponent<BattleModule>();
+            cmpFound = obj.TryGetComponent<BattleModule>(out mod);
 
-            if(mod == this)
+            if(!cmpFound)
                 continue;
 
             j = 0;
             contains = false;
 
-            while(!contains && j < MAX_DETECT_COUNT)
-            {
+            for(j = 0; j < dctModCnt && !contains; j++)
                 contains = (dctMods[j] != null && dctMods[j] == mod);
-                j++;
-            }
 
             if(!contains)
             {
