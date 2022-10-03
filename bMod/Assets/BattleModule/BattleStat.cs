@@ -1,3 +1,6 @@
+using System;
+
+[Serializable]
 public struct BattleStat
 {
     public float maxHealth;
@@ -5,6 +8,9 @@ public struct BattleStat
 
     public float maxMana;
     public float mana;
+
+    public float minPhysicalPower;
+    public float maxPhysicalPower;
 
     public void ChangeHealth(float h)
     {

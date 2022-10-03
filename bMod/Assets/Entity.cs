@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public class Entity : MonoBehaviour
@@ -28,5 +29,22 @@ public class Entity : MonoBehaviour
         float dp = max - min;
         float p = min + range * dp;
         return p;
+    }
+
+    public virtual void OnDamage(BattleModule pubModule, DamageEventData evdat)
+    {
+        StringBuilder msg = new StringBuilder();
+
+        string aname = evdat.attacker.entity.name;
+        string vname = evdat.victim.entity.name;
+        float bh = evdat.baseHealth;
+        float ch = evdat.currentHealth;
+        float dh = evdat.deltaHealth;
+
+        msg.AppendFormat("messager: {0}\n", this.gameObject.name);
+        msg.AppendFormat("attacker: {0}\n", aname);
+        msg.AppendFormat("victim: {0}\n", vname);
+        msg.AppendFormat("health: {0}->{1} (dh={2})\n", bh, ch, dh);
+        Debug.Log(msg.ToString());
     }
 }
