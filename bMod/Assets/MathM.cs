@@ -1,4 +1,4 @@
-public static class MathM
+public static partial class MathM
 {
     public static float Min(float a, float b)
     {

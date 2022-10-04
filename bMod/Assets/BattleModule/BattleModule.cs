@@ -35,6 +35,7 @@ public class BattleModule : MonoBehaviour
     private void RegisterEvents()
     {
         m_onDamage += m_entity.OnDamage;
+        m_onDie +=  m_entity.OnDie;
     }
 
     #region Unity Event Functions
@@ -59,7 +60,7 @@ public class BattleModule : MonoBehaviour
         if(AutoCheckDie())
             return;
 
-        Detect();
+        m_Detect();
         mods = new List<BattleModule>(m_dctMods);
 
         AutoAttack();
@@ -85,7 +86,7 @@ public class BattleModule : MonoBehaviour
             evdat.attacker = this;
 
             for(i = 0; i < m_dctModCnt; i++)
-                m_dctMods[i].Damage(evdat);
+                m_dctMods[i].m_Damage(evdat);
 
             bdat.attackFrameCur = bdat.attackFrame;
             bdat.attackTimes--;
@@ -100,7 +101,7 @@ public class BattleModule : MonoBehaviour
         {
             DieEventData evdat = new DieEventData();
 
-            Die(evdat);
+            m_Die(evdat);
 
             bdat.isDie = true;
         }
@@ -110,7 +111,7 @@ public class BattleModule : MonoBehaviour
     #endregion
 
     #region Stat Change Event Functions
-    public void Detect()
+    private void m_Detect()
     {
         float px = transform.position.x;
         float py = transform.position.y;
@@ -124,7 +125,7 @@ public class BattleModule : MonoBehaviour
         m_dctModCnt = dctModCnt;
     }
 
-    private void Damage(DamageEventData evdat)
+    private void m_Damage(DamageEventData evdat)
     {
         evdat.baseHealth = stat.health;
         stat.ChangeHealth(-evdat.damage);
@@ -136,7 +137,7 @@ public class BattleModule : MonoBehaviour
             m_onDamage(this, evdat);
     }
 
-    private void Heal(HealEventData evdat)
+    private void m_Heal(HealEventData evdat)
     {
         evdat.baseHealth = stat.health;
         stat.ChangeHealth(evdat.healAmount);
@@ -148,7 +149,7 @@ public class BattleModule : MonoBehaviour
             m_onHeal(this, evdat);
     }
 
-    private void Expense(ExpenseEventData evdat)
+    private void m_Expense(ExpenseEventData evdat)
     {
         evdat.baseMana = stat.mana;
         stat.ChangeMana(-evdat.expenseAmount);
@@ -160,7 +161,7 @@ public class BattleModule : MonoBehaviour
             m_onExpense(this, evdat);
     }
 
-    private void Charge(ChargeEventData evdat)
+    private void m_Charge(ChargeEventData evdat)
     {
         evdat.baseMana = stat.mana;
         stat.ChangeMana(evdat.chargeAmount);
@@ -172,9 +173,10 @@ public class BattleModule : MonoBehaviour
             m_onCharge(this, evdat);
     }
 
-    private void Die(DieEventData evdat)
+    private void m_Die(DieEventData evdat)
     {
-        m_onDie(this, evdat);
+        if(m_onDie != null)
+            m_onDie(this, evdat);
     }
     #endregion
 

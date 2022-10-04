@@ -47,4 +47,14 @@ public class Entity : MonoBehaviour
         msg.AppendFormat("health: {0}->{1} (dh={2})\n", bh, ch, dh);
         Debug.Log(msg.ToString());
     }
+
+    public virtual void OnDie(BattleModule pubModule, DieEventData evdat)
+    {
+        StringBuilder msg = new StringBuilder();
+
+        string modname = pubModule.entity.name;
+
+        msg.AppendFormat("{0} has been Dead.\n", modname);
+        Debug.Log(msg.ToString());
+    }
 }
