@@ -13,8 +13,7 @@ public class BattleModule : MonoBehaviour
 
     [Header("Module Properties")]
     public BattleStat stat;
-    public BattleData bdat;
-    
+
     // Detect options
     public LTRB areaD2;
     public LTRB areaD1;
@@ -24,28 +23,12 @@ public class BattleModule : MonoBehaviour
     public Entity entity => m_entity;
     private Entity m_entity;
 
-    // Event Handlers
-    private delegate void BattleEventHandler<T>(BattleModule pubModule, T evdat);
-    private BattleEventHandler<DieEventData> m_onDie;
-    private BattleEventHandler<DamageEventData> m_onDamage;
-    private BattleEventHandler<HealEventData> m_onHeal;
-    private BattleEventHandler<ExpenseEventData> m_onExpense;
-    private BattleEventHandler<ChargeEventData> m_onCharge;
-
-    private void RegisterEvents()
-    {
-        m_onDamage += m_entity.OnDamage;
-        m_onDie +=  m_entity.OnDie;
-    }
-
     #region Unity Event Functions
     private void Start()
     {
         m_dctCols = new Collider2D[MAX_DETECT_COUNT];
         m_dctMods = new BattleModule[MAX_DETECT_COUNT];
         m_entity = GetComponent<Entity>();
-
-        RegisterEvents();
 
         if(randomizeLTRB)
         {
@@ -60,22 +43,53 @@ public class BattleModule : MonoBehaviour
         if(AutoCheckDie())
             return;
 
-        m_Detect();
+        if(m_entity.canDetect)
+            Detect(m_dctCols, m_dctMods, m_entity.detectRange, MAX_DETECT_COUNT, out m_dctColCnt, out m_dctModCnt);
+
+        if(m_entity.isAttack)
+        {
+            m_entity.isAttack = false;
+            Attack();
+        }
+
         mods = new List<BattleModule>(m_dctMods);
 
-        AutoAttack();
+        // AutoAttack();
     }
     #endregion
 
     #region Automatic Executor
+    public void Attack()
+    {
+        Detect(m_dctCols, m_dctMods, m_entity.attackRange, MAX_DETECT_COUNT, out m_dctColCnt, out m_dctModCnt);
+
+        if(m_dctModCnt > 0)
+        {
+            float damage = stat.maxPhysicalPower; // TODO: 현재는 max로 설정했지만 후에 min과 max 사이 랜덤한 값을 불러올 수 있도록 해야 함.
+
+            DamageEventData evdat = new DamageEventData();
+            evdat.damage = damage;
+            evdat.attacker = this;
+
+            for(int i = 0; i < m_dctModCnt; i++)
+                m_dctMods[i].m_Damage(evdat);
+
+            Debug.Log("적을 찾음");
+        }
+        else
+        {
+            Debug.Log("적을 찾지 못함");
+        }
+    }
+
     private void AutoAttack()
     {
-        if(bdat.attackTimes == 0)
-            bdat.attackFrameCur = 0;
-        else if(bdat.attackTimes < 0) // NOTE: 오류 방지
-            bdat.attackTimes = 0;
-        else if(bdat.attackFrameCur > 0)
-            bdat.attackFrameCur--;
+        if(m_entity.attackTimes == 0)
+            m_entity.attackFrameCur = 0;
+        else if(m_entity.attackTimes < 0) // NOTE: 오류 방지
+            m_entity.attackTimes = 0;
+        else if(m_entity.attackFrameCur > 0)
+            m_entity.attackFrameCur--;
         else
         {
             int i;
@@ -88,8 +102,8 @@ public class BattleModule : MonoBehaviour
             for(i = 0; i < m_dctModCnt; i++)
                 m_dctMods[i].m_Damage(evdat);
 
-            bdat.attackFrameCur = bdat.attackFrame;
-            bdat.attackTimes--;
+            m_entity.attackFrameCur = m_entity.attackFrame;
+            m_entity.attackTimes--;
         }
     }
 
@@ -97,13 +111,13 @@ public class BattleModule : MonoBehaviour
     {
         bool curDie = stat.health <= 0;
 
-        if(!bdat.isDie && curDie)
+        if(!m_entity.isDie && curDie)
         {
             DieEventData evdat = new DieEventData();
 
             m_Die(evdat);
 
-            bdat.isDie = true;
+            m_entity.isDie = true;
         }
 
         return curDie;
@@ -111,7 +125,18 @@ public class BattleModule : MonoBehaviour
     #endregion
 
     #region Stat Change Event Functions
-    private void m_Detect()
+    public void Detect(Collider2D[] dctCols, BattleModule[] dctMods, LTRB ltrb, int maxCnt, out int dctColCnt, out int dctModCnt)
+    {
+        float px = transform.position.x;
+        float py = transform.position.y;
+        Vector2 vc = new Vector2(px + ltrb.dx, py + ltrb.dy);
+        Vector2 vs = new Vector2(ltrb.sx, ltrb.sy);
+
+        dctColCnt = Physics2D.OverlapBoxNonAlloc(vc, vs, 0.0f, dctCols, targetLayer);
+        dctModCnt = FilterBattleModule(dctCols, dctColCnt, dctMods);
+    }
+
+    public void m_Detect()
     {
         float px = transform.position.x;
         float py = transform.position.y;
@@ -133,8 +158,8 @@ public class BattleModule : MonoBehaviour
         evdat.deltaHealth = evdat.currentHealth - evdat.baseHealth;
         evdat.victim = this;
 
-        if(m_onDamage != null)
-            m_onDamage(this, evdat);
+        if(m_entity != null)
+            m_entity.asm_OnDamage(this, evdat);
     }
 
     private void m_Heal(HealEventData evdat)
@@ -145,8 +170,8 @@ public class BattleModule : MonoBehaviour
         evdat.deltaHealth = evdat.currentHealth - evdat.baseHealth;
         evdat.healee = this;
 
-        if(m_onHeal != null)
-            m_onHeal(this, evdat);
+        if(m_entity != null)
+            m_entity.asm_OnHeal(this, evdat);
     }
 
     private void m_Expense(ExpenseEventData evdat)
@@ -157,8 +182,8 @@ public class BattleModule : MonoBehaviour
         evdat.deltaMana = evdat.currentMana - evdat.baseMana;
         evdat.customer = this;
 
-        if(m_onExpense != null)
-            m_onExpense(this, evdat);
+        if(m_entity != null)
+            m_entity.asm_OnExpense(this, evdat);
     }
 
     private void m_Charge(ChargeEventData evdat)
@@ -169,14 +194,14 @@ public class BattleModule : MonoBehaviour
         evdat.deltaMana = evdat.currentMana - evdat.baseMana;
         evdat.chargee = this;
 
-        if(m_onCharge != null)
-            m_onCharge(this, evdat);
+        if(m_entity != null)
+            m_entity.asm_OnCharge(this, evdat);
     }
 
     private void m_Die(DieEventData evdat)
     {
-        if(m_onDie != null)
-            m_onDie(this, evdat);
+        if(m_entity != null)
+            m_entity.asm_OnDie(this, evdat);
     }
     #endregion
 
@@ -235,6 +260,11 @@ public class BattleModule : MonoBehaviour
     {
         BattleGizmos.DrawAreaLTRB(transform.position, areaD2, Color.cyan);
         BattleGizmos.DrawAreaLTRB(transform.position, areaD1, Color.red);
+
+        if(m_entity != null)
+        {
+            BattleGizmos.DrawAreaLTRB(transform.position, m_entity.detectRange, Color.green);
+        }
     }
 #endif
     #endregion

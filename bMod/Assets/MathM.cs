@@ -26,4 +26,11 @@ public static partial class MathM
         else
             return b;
     }
+
+    public static void Swap(ref float a, ref float b)
+    {
+        float t = a;
+        a = b;
+        b = t;
+    }
 }

@@ -1,0 +1,1 @@
+public delegate void BattleEventHandler<T>(BattleModule pubModule, T evdat);
