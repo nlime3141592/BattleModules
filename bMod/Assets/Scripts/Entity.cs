@@ -11,7 +11,7 @@ public partial class Entity : MonoBehaviour
     public const float MIN_PY = -5.0f;
     public const float MAX_PY = 5.0f;
 
-    private SpriteRenderer sprnd;
+    protected SpriteRenderer sprnd;
 
     // NOTE: BattleModule 어셈블리의 partial Entity class가 RegisterBattleModule() 함수를 Implementation합니다.
     // 고민:

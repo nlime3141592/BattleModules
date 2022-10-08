@@ -7,7 +7,9 @@ public class Boss : Entity
     public int currentPhase = 0;
 
     public int CURRENT_STATE;
+    private int crst;
     public Player PLAYER;
+    public Animator animator;
 
     // GridAI Options
     private System.Random m_prng;
@@ -16,8 +18,8 @@ public class Boss : Entity
     public GridPoint gp2;
     public GridPoint gp3;
     public GridPoint gp4;
-    public int pulseAverage;
-    public int pulseRange;
+    public int pulseAverage = 68;
+    public int pulseRange = 37;
 
     // 사마귀 보스에 들어갈 상태 값
     private const int stCnt = 11; // 상태의 갯수
@@ -45,9 +47,16 @@ public class Boss : Entity
     public int gx;
     public int gy;
 
+    private void UpdateLookDir()
+    {
+        base.sprnd.flipX = (lookDir == -1);
+    }
+
     protected override void Start()
     {
         base.Start();
+
+        animator = GetComponent<Animator>();
 
         m_machine = new StateMachine(stIdle);
         m_prng = new System.Random();
@@ -88,6 +97,7 @@ public class Boss : Entity
             float dy = PLAYER.transform.position.y - transform.position.y;
 
             gai.Capture(dx * lookDir, dy);
+            UpdateLookDir();
 
             m_machine.UpdateLogic();
         }
@@ -107,9 +117,14 @@ public class Boss : Entity
             m_machine.UpdateInput();
         }
 
+        crst = CURRENT_STATE;
         CURRENT_STATE = m_machine.state;
+        if(crst != CURRENT_STATE) Debug.Log(string.Format("상태 전이: {0}->{1}", crst, CURRENT_STATE));
+        animator.SetInteger("currentState", m_machine.state);
+
         gx = gai.m_gx;
         gy = gai.m_gy;
+
     }
 
     // XXXUpdate override해서 StateMachine.UpdateLogic() 및 StateMachine.UpdateInput() 실행
@@ -268,7 +283,7 @@ public class Boss : Entity
         isEndOfAnimation = true;
     }
 
-    public void Attack()
+    public void OnAttack()
     {
         isAttack = true;
     }
@@ -277,7 +292,7 @@ public class Boss : Entity
     #region Implement State; stIdle
     private void Enter_Idle()
     {
-        logicFps = (int)m_prng.RangeNextDouble(68, 37);
+        logicFps = (int)m_prng.RangeNextDouble(pulseAverage, pulseRange);
     }
 
     private void Input_Idle()

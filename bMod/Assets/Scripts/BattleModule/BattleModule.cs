@@ -53,6 +53,7 @@ public class BattleModule : MonoBehaviour
         }
 
         mods = new List<BattleModule>(m_dctMods);
+        cols = new List<Collider2D>(m_dctCols);
 
         // AutoAttack();
     }
@@ -62,6 +63,8 @@ public class BattleModule : MonoBehaviour
     public void Attack()
     {
         Detect(m_dctCols, m_dctMods, m_entity.attackRange, MAX_DETECT_COUNT, out m_dctColCnt, out m_dctModCnt);
+
+        DebugAttackGizmo.Show(transform.position, m_entity.attackRange, Color.yellow);
 
         if(m_dctModCnt > 0)
         {
@@ -254,6 +257,7 @@ public class BattleModule : MonoBehaviour
     [Header("Debug Options")]
     public bool randomizeLTRB;
     public List<BattleModule> mods;
+    public List<Collider2D> cols;
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()
