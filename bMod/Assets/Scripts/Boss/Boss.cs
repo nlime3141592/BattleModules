@@ -292,6 +292,9 @@ public class Boss : Entity
     #region Implement State; stIdle
     private void Enter_Idle()
     {
+        // TODO:
+        // 초기 Enter를 감지할 수 있는 bool 변수 하나
+        // 초기 Enter일 경우 logicFps를 길게 설정하기.
         logicFps = (int)m_prng.RangeNextDouble(pulseAverage, pulseRange);
     }
 
