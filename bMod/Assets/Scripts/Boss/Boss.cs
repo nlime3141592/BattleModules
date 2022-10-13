@@ -10,6 +10,8 @@ public class Boss : Entity
     private int crst;
     public Player PLAYER;
     public Animator animator;
+    public SpriteRenderer spRenderer;
+    public Rigidbody2D rigid;
 
     // GridAI Options
     private System.Random m_prng;
@@ -49,7 +51,8 @@ public class Boss : Entity
 
     private void UpdateLookDir()
     {
-        base.sprnd.flipX = (lookDir == -1);
+        
+        spRenderer.flipX = (lookDir == -1);
     }
 
     protected override void Start()
@@ -57,6 +60,8 @@ public class Boss : Entity
         base.Start();
 
         animator = GetComponent<Animator>();
+        spRenderer = GetComponent<SpriteRenderer>();
+        rigid = GetComponent<Rigidbody2D>();
 
         m_machine = new StateMachine(stIdle);
         m_prng = new System.Random();
@@ -64,12 +69,12 @@ public class Boss : Entity
         m_machine.SetCallbacks(stIdle, Input_Idle, Logic_Idle, Enter_Idle, null);
         m_machine.SetCallbacks(stWalkForward, Input_WalkForward, Logic_WalkForward, Enter_WalkForward, null);
         m_machine.SetCallbacks(stWalkBack, Input_WalkBack, Logic_WalkBack, Enter_WalkBack, null);
-        m_machine.SetCallbacks(stUpSlice, Input_UpSlice, null, Enter_UpSlice, null);
-        m_machine.SetCallbacks(stTakeDown, Input_TakeDown, null, Enter_TakeDown, null);
-        m_machine.SetCallbacks(stRotateSlice, Input_RotateSlice, null, Enter_RotateSlice, null);
-        m_machine.SetCallbacks(stShout, Input_Shout, null, Enter_Shout, null);
-        m_machine.SetCallbacks(stReadyKnife, Input_ReadyKnife, null, Enter_ReadyKnife, null);
-        m_machine.SetCallbacks(stJumpTakeDown, Input_JumpTakeDown, null, Enter_JumpTakeDown, null);
+        m_machine.SetCallbacks(stUpSlice, Input_UpSlice, Logic_UpSlice, Enter_UpSlice, null);
+        m_machine.SetCallbacks(stTakeDown, Input_TakeDown, Logic_TakeDown, Enter_TakeDown, null);
+        m_machine.SetCallbacks(stRotateSlice, Input_RotateSlice, Logic_RotateSlice, Enter_RotateSlice, null);
+        m_machine.SetCallbacks(stShout, Input_Shout, Logic_Shout, Enter_Shout, null);
+        m_machine.SetCallbacks(stReadyKnife, Input_ReadyKnife, Logic_ReadyKnife, Enter_ReadyKnife, null);
+        m_machine.SetCallbacks(stJumpTakeDown, Input_JumpTakeDown, Logic_JumpTakeDown, Enter_JumpTakeDown, null);
         m_machine.SetCallbacks(stCombo00, null, null, Enter_Combo00, null);
         m_machine.SetCallbacks(stCombo01, null, null, Enter_Combo01, null);
 
@@ -317,6 +322,7 @@ public class Boss : Entity
         if(logicFps > 0)
         {
             logicFps--;
+            rigid.velocity = Vector2.zero;
         }
     }
     #endregion
@@ -342,7 +348,8 @@ public class Boss : Entity
         {
             logicFps--;
 
-            transform.Translate(Vector3.right * GetMoveSpeed() * lookDir * Time.fixedDeltaTime);
+            // transform.Translate(Vector3.right * GetMoveSpeed() * lookDir * Time.fixedDeltaTime);
+            rigid.velocity = Vector3.right * GetMoveSpeed() * lookDir;
         }
     }
     #endregion
@@ -365,7 +372,8 @@ public class Boss : Entity
         {
             logicFps--;
 
-            transform.Translate(Vector3.right * GetMoveSpeed() * -lookDir * Time.fixedDeltaTime);
+            // transform.Translate(Vector3.right * GetMoveSpeed() * -lookDir * Time.fixedDeltaTime);
+            rigid.velocity = Vector3.right * GetMoveSpeed() * -lookDir;
         }
     }
     #endregion
@@ -394,6 +402,11 @@ public class Boss : Entity
                 m_machine.ChangeState(stIdle);
         }
     }
+
+    private void Logic_UpSlice()
+    {
+        rigid.velocity = Vector2.zero;
+    }
     #endregion
 
     #region Implement State; stTakeDown
@@ -413,6 +426,11 @@ public class Boss : Entity
         if(isEndOfAnimation)
             m_machine.ChangeState(stIdle);
     }
+
+    private void Logic_TakeDown()
+    {
+        rigid.velocity = Vector2.zero;
+    }
     #endregion
 
     #region Implement State; stRotateSlice
@@ -431,6 +449,11 @@ public class Boss : Entity
     {
         if(isEndOfAnimation)
             m_machine.ChangeState(stIdle);
+    }
+
+    private void Logic_RotateSlice()
+    {
+        rigid.velocity = Vector2.zero;
     }
     #endregion
 
@@ -458,6 +481,11 @@ public class Boss : Entity
                 m_machine.ChangeState(stIdle);
         }
     }
+
+    private void Logic_Shout()
+    {
+        rigid.velocity = Vector2.zero;
+    }
     #endregion
 
     #region Implement State; stReadyKnife
@@ -474,6 +502,11 @@ public class Boss : Entity
         if(isEndOfAnimation)
             m_machine.ChangeState(stIdle);
     }
+
+    private void Logic_ReadyKnife()
+    {
+        rigid.velocity = Vector2.zero;
+    }
     #endregion
 
     #region Implement State; stJumpTakeDown
@@ -489,6 +522,11 @@ public class Boss : Entity
     {
         if(isEndOfAnimation)
             m_machine.ChangeState(stIdle);
+    }
+
+    private void Logic_JumpTakeDown()
+    {
+        rigid.velocity = Vector2.zero;
     }
     #endregion
 

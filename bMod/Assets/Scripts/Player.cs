@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Player : Entity
+public class _Player : _Entity
 {
     public float speed = 3.0f;
     private float xInput;
