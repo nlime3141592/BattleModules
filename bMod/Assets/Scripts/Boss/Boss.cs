@@ -50,9 +50,8 @@ public class Boss : Entity
     public int gy;
 
     private void UpdateLookDir()
-    {
-        
-        spRenderer.flipX = (lookDir == -1);
+    {   
+        spRenderer.flipX = (lookDir == 1);
     }
 
     protected override void Start()
