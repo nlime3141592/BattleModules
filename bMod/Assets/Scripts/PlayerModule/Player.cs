@@ -372,16 +372,40 @@ public class Player : Entity
 
     protected float GetMoveSpeed()
     {
-        return isRun ? runSpeed : walkSpeed;
+        float speed = isRun ? runSpeed : walkSpeed;
+        return speed;
     }
 
-    protected float CheckVelocityX(float currentVx)
+    protected float CheckVelocityX(float currentVx, bool ignoreForce = false)
     {
         if(inputData.xInput == lookDir && (isHitWallT == lookDir || isHitWallB == lookDir))
             return 0.0f;
 
+        cvx1 = currentVx;
+        Vector2 forceSum = ForceAreaManager.GetValue(transform.position);
+
+        if(forceSum.x < 0.0f)
+            pushDir = -1;
+        else if(forceSum.x > 0.0f)
+            pushDir = 1;
+        else
+            pushDir = 0;
+
+        // if(!ignoreForce && pushDir != 0 && lookDir + pushDir == 0) currentVx *= (1.0f - pushScala.x);
+        float fx = Mathf.Abs(forceSum.x);
+        if(fx > 1.0f)
+            fx = 1.0f;
+        else if(fx < 0.0f)
+            fx = 0.0f;
+
+        if(!ignoreForce && pushDir != 0 && lookDir + pushDir == 0)
+            currentVx *= (1.0f - fx);
+
+        cvx2 = currentVx;
         return currentVx;
     }
+    private float cvx1;
+    private float cvx2;
 // (Check Ground)/(Ceil)/(Wall)/(Head-Over Semi Ground)/(Ledge)/(Ledge Hanging)
     protected void CheckGround()
     {
@@ -1091,7 +1115,8 @@ public class Player : Entity
 
     private void Logic_Gliding()
     {
-        vx = currentVelocity.x;
+        // vx = currentVelocity.x;
+        vx = CheckVelocityX(currentVelocity.x);
         vy = -glidingSpeed;
         float tx = currentVelocity.x;
         DiscreteGraph gAcc = glidingAccelGraphX;
@@ -1427,7 +1452,8 @@ public class Player : Entity
         if(leftJumpDownFrame > 0)
         {
             leftJumpDownFrame--;
-            vx = GetMoveSpeed() * inputData.xInput;
+            // vx = GetMoveSpeed() * inputData.xInput;
+            vx = CheckVelocityX(GetMoveSpeed() * inputData.xInput);
             // vx = 0.0f;
             vy = jumpDownSpeed * jumpDownGraph[leftJumpDownFrame];
             SetVelocityXY(vx, vy);
@@ -1440,7 +1466,7 @@ public class Player : Entity
             if(proceedFreeFallFrame < freeFallFrame)
                 proceedFreeFallFrame++;
 
-            vx = GetMoveSpeed() * inputData.xInput;
+            vx = CheckVelocityX(GetMoveSpeed() * inputData.xInput);
             // vx = 0.0f;
             vy = -maxFreeFallSpeed * freeFallGraph[proceedFreeFallFrame - 1];
             SetVelocityXY(vx, vy);
@@ -1504,7 +1530,7 @@ public class Player : Entity
         if(leftRollFrame > 0)
             leftRollFrame--;
 
-        float speed = CheckVelocityX(rollSpeed);
+        float speed = CheckVelocityX(rollSpeed, true);
 
         if(speed == 0)
             DisableGravity();
@@ -1627,7 +1653,7 @@ public class Player : Entity
             EnableGravity();
 
             leftDashInvincibilityFrame--;
-            vx = CheckVelocityX(dashSpeed * dashGraph[leftDashInvincibilityFrame] * dashLookDir);
+            vx = CheckVelocityX(dashSpeed * dashGraph[leftDashInvincibilityFrame] * dashLookDir, true);
             vy = 0.0f;
             SetVelocityXY(vx, vy);
         }
@@ -1774,7 +1800,7 @@ public class Player : Entity
         {
             leftJumpWallFrame--;
 
-            vx = (isJumpWallCanceledX ? GetMoveSpeed() * inputData.xInput : jumpWallSpeedX * jumpWallGraphX[leftJumpWallFrame] * jumpWallLookDir);
+            vx = CheckVelocityX((isJumpWallCanceledX ? GetMoveSpeed() * inputData.xInput : jumpWallSpeedX * jumpWallGraphX[leftJumpWallFrame] * jumpWallLookDir));
             vy = jumpWallSpeedY * jumpWallGraphY[leftJumpWallFrame];
 
             SetVelocityXY(vx, vy);
@@ -1868,4 +1894,17 @@ public class Player : Entity
         PlayerExtensions.CreateDataTable(path);
     }
     #endregion
+
+    protected void OnDrawGizmos()
+    {
+        Vector3 p = transform.position;
+        Vector3 u = Vector3.up;
+        Vector3 dx1 = Vector3.right * cvx1;
+        Vector3 dx2 = Vector3.right * cvx2;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(p, p + dx1);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(p + u, p + u + dx2);
+    }
 }

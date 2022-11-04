@@ -15,6 +15,14 @@ public partial class Entity : MonoBehaviour
     // TEST
     partial void RegisterBattleModule();
 
+    public int pushDir;
+    public Vector2 pushScala;
+    public void FixBug()
+    {
+        pushDir = 0;
+        pushScala = Vector2.zero;
+    }
+
     // Entity Physics
     public float width
     {

@@ -7,101 +7,54 @@ using UnityEngine;
 
 public class ForceArea : MonoBehaviour
 {
-    [Header("Area Definition")]
-    public float x0;
-    public float x1;
-    public float x2;
-    public float x3;
-    public float y0;
-    public float y1;
-    public float wn;
-    public float wx;
+    [Header("Force Area Bases")]
+    public AreaMode mode;
+    public float inner = 0.5f;
+    public float outer = 0.0f;
+    public Color gizmoColor = Color.yellow;
 
-    private int[] idxs = new int[]{
-        0,1,2,3, 0,1,3,2, 0,2,1,3, 0,2,3,1, 0,3,1,2, 0,3,2,1,
-        1,0,2,3, 1,0,3,2, 1,2,0,3, 1,2,3,0, 1,3,0,2, 1,3,2,0,
-        2,0,1,3, 2,0,3,1, 2,1,0,3, 2,1,3,0, 2,3,0,1, 2,3,1,0,
-        3,0,1,2, 3,0,2,1, 3,1,0,2, 3,1,2,0, 3,2,0,1, 3,2,1,0
-    };
+    [Header("Box Area Options")]
+    public LTRB ltrb;
+    [Header("Circle Area Options")]
+    public Vector2 circleOffset;
+    public float radius;
 
-    [Header("Area Debug Option")]
-    public float xn;
-    public float xx;
-    public float yn;
-    public float yx;
-    public float dx;
-    public float dy;
-
-    [Header("Image Information")]
-    public int width;
-    public int height;
-    private byte[] pixels;
-
-    [Header("Basic Debug Option")]
-    public bool checker = false;
-
-    private void Update()
+    public enum AreaMode
     {
-        if(checker)
-        {
-            checker = false;
-
-            float[] xArr = new float[]{x0, x1, x2, x3};
-
-            for(int i = 0; i < 1; i++)
-            {
-                int ptr = idxs[4 * i];
-
-                SetPixels(
-                    xArr[ptr], xArr[ptr + 1], xArr[ptr + 2], xArr[ptr + 3],
-                    y0, y1,
-                    wx, wn
-                );
-            }
-        }
+        Box, Circle
     }
 
-    private float GetWeight(
-        float _x0, float _x1, float _x2, float _x3,
-        float _y0, float _y1,
-        float _wx, float _wn,
-        float px, float py
-        )
+    private void OnEnable()
     {
-        if(py < _y0 || py > _y1 || px < _x0 || px > _x3)
-            return _wn;
-        else if(px < _x1)
-            return (_wx - _wn) * (px - _x0) / (_x1 - _x0);
-        else if(px > _x2)
-            return (_wx - _wn) * (_x3 - px) / (_x3 - _x2);
-        else
-            return _wx;
+        ForceAreaManager.Subscribe(this);
     }
 
-    private void SetPixels(
-        float _x0, float _x1, float _x2, float _x3,
-        float _y0, float _y1,
-        float _wx, float _wn
-    )
+    private void OnDisable()
     {
-        width = (int)((xx - xn) / dx);
-        height = (int)((yx - yn) / dy);
+        ForceAreaManager.Unsubscribe(this);
+    }
 
-        pixels = new byte[width * height];
+    private void OnDrawGizmos()
+    {
+        Color color_backup = Gizmos.color;
+        Gizmos.color = gizmoColor;
 
-        for(int i = 0; i < height; i++)
-        for(int j = 0; j < width; j++)
+        switch(mode)
         {
-            float px = j * dx + xn;
-            float py = i * dy + yn;
-            int idx = i * width + j;
-            float value = GetWeight(
-                _x0, _x1, _x2, _x3,
-                _y0, _y1,
-                _wx, _wn,
-                px, py
-                );
-            pixels[idx] = (byte)value;
+            case AreaMode.Box:
+                float px = transform.position.x + 0.5f * (ltrb.r - ltrb.l);
+                float py = transform.position.y + 0.5f * (ltrb.t - ltrb.b);
+                float sx = ltrb.l + ltrb.r;
+                float sy = ltrb.b + ltrb.t;
+                Gizmos.DrawWireCube(new Vector3(px, py, transform.position.z), new Vector3(sx, sy, 0.0f));
+                break;
+            case AreaMode.Circle:
+                Gizmos.DrawWireSphere(transform.position + new Vector3(circleOffset.x, circleOffset.y, 0.0f), radius);
+                break;
+            default:
+                break;
         }
+
+        Gizmos.color = color_backup;
     }
 }

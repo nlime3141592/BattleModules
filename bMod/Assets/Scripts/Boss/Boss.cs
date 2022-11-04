@@ -49,6 +49,9 @@ public class Boss : Entity
     public int gx;
     public int gy;
 
+    // 기타 필요한 변수
+    public LTRB pushForceArea;
+
     private void UpdateLookDir()
     {   
         spRenderer.flipX = (lookDir == 1);
@@ -112,6 +115,8 @@ public class Boss : Entity
             if(m_machine.state != stIdle)
                 m_machine.ChangeState(stIdle);
         }
+
+        // DetectPushArea();
     }
 
     private void Update()
@@ -549,4 +554,61 @@ public class Boss : Entity
     {
         return 3.0f;
     }
+/*
+    public LayerMask tLayer;
+    public float pushWeight = 1.2f;
+    public void DetectPushArea()
+    {
+        Vector3 p = transform.position + new Vector3(pushForceArea.dx, pushForceArea.dy, 0.0f);
+        Vector2 s = new Vector2(pushForceArea.sx, pushForceArea.sy);
+        Collider2D[] cols = Physics2D.OverlapBoxAll(p, s, 0.0f, tLayer);
+
+        for(int i = 0; i < cols.Length; i++)
+        {
+            if(cols[i].gameObject == this.gameObject)
+                continue;
+
+            Entity e;
+
+            if(cols[i].gameObject.TryGetComponent<Entity>(out e))
+            {
+                float dx = e.transform.position.x - transform.position.x;
+                float dy = e.transform.position.y - transform.position.y;
+                float scala = GetPushForce(dx, dy, pushWeight);
+
+                e.pushScala.x = scala;
+
+                if(scala == 0.0f)
+                    e.pushDir = 0;
+                else if(dx < 0.0f)
+                    e.pushDir = -1;
+                else
+                    e.pushDir = 1;
+            }
+        }
+    }
+
+    private float GetPushForce(float dx, float dy, float weight)
+    {
+        float scala = 0.0f;
+
+        if( dy < -pushForceArea.b || dy > pushForceArea.t || dx < -pushForceArea.l || dx > pushForceArea.r)
+            scala = 0.0f;
+        else if(dx < 0.0f)
+            scala = weight * (1 + dx / pushForceArea.l);
+        else
+            scala = weight * (1 - dx / pushForceArea.r);
+
+        scala = Mathf.Sqrt(scala);
+        if(scala < 0.0f) scala = 0.0f;
+        else if(scala > 1.0f) scala = 1.0f;
+
+        return scala;
+    }
+
+    protected void OnDrawGizmos()
+    {
+        pushForceArea.DrawGizmo(transform, Color.red);
+    }
+*/
 }
